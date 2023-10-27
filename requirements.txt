@@ -1,0 +1,4 @@
+gTTS==2.4.0
+PyMuPDF==1.23.5
+PyMuPDFb==1.23.5
+tk==0.1.0
