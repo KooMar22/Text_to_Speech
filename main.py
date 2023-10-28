@@ -1,5 +1,5 @@
 # Import required modules
-from tkinter import Tk, Label, StringVar, OptionMenu, Button, filedialog, messagebox
+from tkinter import Tk, Label, Entry, StringVar, OptionMenu, Button, filedialog, END
 from gtts import gTTS
 from PyPDF2 import PdfReader
 
@@ -7,14 +7,14 @@ from PyPDF2 import PdfReader
 class PDFToAudioConverter():
     def __init__(self, root):
         self.root = root
-        self.root.title("PDF to MP3 Converter")
+        self.root.title("Markanov Text to Audio Converter")
         self.root.config(bg="light yellow")
         self.root.resizable(True, True)
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
-        window_width = 250
-        window_height = 100
+        window_width = 370
+        window_height = 200
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -23,20 +23,27 @@ class PDFToAudioConverter():
         self.root.geometry("{}x{}+{}+{}".format(window_width, window_height, x, y))
 
         self.manual_lbl = Label(root, bg="light yellow",
-                                text="This app converts text to speech by getting text from a PDF file and converts it into an MP3 file.",
+                                text="This app converts text to speech by getting text from a PDF file\nand converts it into an MP3 file.\nIt can only read text from proper PDF files,\ntext within pictures is not yet supported.",
                                 anchor="w", justify="left")
-        self.manual_lbl.grid(column=0, row=0)
+        self.manual_lbl.grid(column=0, row=0, columnspan=2, padx=5, pady=5, sticky="w")
 
         self.prompt_lbl = Label(root, bg="light yellow",text="Please select a PDF file:")
         self.prompt_lbl.grid(column=0, row=1, sticky="w")
 
         self.language_lbl = Label(root, bg="light yellow", text="Select Language:")
-        self.language_lbl.grid(column=0, row=3, sticky="w")
+        self.language_lbl.grid(column=0, row=4, sticky="w")
+
+        self.status_lbl = Label(root, bg="light yellow", text="", anchor="w", justify="left")
+        self.status_lbl.grid(column=0, row=5, columnspan=2)
+
+        self.selected_file = Entry(root, state="readonly", width=150)
+        self.selected_file.grid(column=0, row=3, pady=5)
+        self.selected_file.insert(0, "No file selected")
 
         self.selected_language = StringVar()
-        language_options = ["en", "es", "fr"]
+        language_options = ["en", "es", "fr", "bs", "de", "hr", "iw"]
         self.language_menu = OptionMenu(root, self.selected_language, *language_options)
-        self.language_menu.grid(column=1, row=3)
+        self.language_menu.grid(column=1, row=4)
         self.selected_language.set("en")
 
         self.select_btn = Button(root, text="Select File", command=self.select_pdf_file)
@@ -50,7 +57,15 @@ class PDFToAudioConverter():
     def select_pdf_file(self):
         self.pdf_file_path = filedialog.askopenfilename(filetypes=[("PDF Files", "*.pdf")])
         if self.pdf_file_path:
+            self.selected_file.config(state="normal")
+            self.selected_file.delete(0, END)
+            self.selected_file.insert(0, self.pdf_file_path)
+            self.selected_file.config(state="readonly")
             self.convert_btn.config(state="normal", bg="light green")
+        else:
+            self.selected_file.config(state="readonly")
+            self.selected_file.delete(0, END)
+            self.selected_file.insert(0, "No file selected")
 
     def get_text_from_pdf(self):
         if not self.pdf_file_path:
@@ -60,13 +75,11 @@ class PDFToAudioConverter():
 
         with open(self.pdf_file_path, "rb") as pdf:
             pdf_reader = PdfReader(pdf)
-        
             for page in pdf_reader.pages:
                 content = page.extract_text()
                 text += content
         
         return text
-
 
     def get_audio_from_text(self, text, language):
         text_to_speech = gTTS(text=text, lang=language, slow=False)
@@ -74,14 +87,24 @@ class PDFToAudioConverter():
         mp3_file_path = filedialog.asksaveasfilename(defaultextension="mp3", filetypes=[("MP3 Files", "*.mp3")])
         if mp3_file_path:
             text_to_speech.save(mp3_file_path)
-            messagebox.showinfo("Info", "Text file converted to audio successfully!")
-        else:
-            messagebox.showerror("Error", "Could not convert text to MP3 file!")
 
     def convert_to_mp3(self):
         text = self.get_text_from_pdf()
-        selected_language = self.selected_language.get()
-        self.get_audio_from_text(text, selected_language)
+        if text is not None:
+            selected_language = self.selected_language.get()
+            self.status_lbl.config(text="Converting PDF to MP3 file...", bg="light yellow")
+            self.root.update()
+
+            try:
+                self.get_audio_from_text(text, selected_language)
+                self.status_lbl.config(text="Text converted to audio file successfully!",
+                                       bg="light green")
+            except Exception as e:
+                self.status_lbl.config(text=f"Error: {e}", bg="red")
+        
+        else:
+            self.status_lbl.config(text="Error: Could not read text from PDF file.",
+                                   bg="red")
 
 
 if __name__ == "__main__":
