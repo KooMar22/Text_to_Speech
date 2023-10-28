@@ -1,7 +1,8 @@
 # Import required modules
 from tkinter import Tk, Label, StringVar, OptionMenu, Button, filedialog, messagebox
 from gtts import gTTS
-import fitz
+import pdfplumber
+from PyPDF2 import PdfReader
 
 
 class PDFToAudioConverter():
@@ -58,13 +59,15 @@ class PDFToAudioConverter():
 
         text = ""
 
-        pdf_file = fitz.open(self.pdf_file_path)
-
-        for page_num in range(len(pdf_file)):
-            page = pdf_file.load_page(page_num)
-            text += page.get_text()
-
+        with open(self.pdf_file_path, "rb") as pdf:
+            pdf_reader = PdfReader(pdf)
+        
+            for page in pdf_reader.pages:
+                content = page.extract_text()
+                text += content
+        
         return text
+
 
     def get_audio_from_text(self, text, language):
         text_to_speech = gTTS(text=text, lang=language, slow=False)
