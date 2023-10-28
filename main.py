@@ -1,7 +1,6 @@
 # Import required modules
 from tkinter import Tk, Label, StringVar, OptionMenu, Button, filedialog, messagebox
 from gtts import gTTS
-import pdfplumber
 from PyPDF2 import PdfReader
 
 
