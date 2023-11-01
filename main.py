@@ -1,7 +1,7 @@
 # Import required modules
 from tkinter import Tk, Label, Entry, StringVar, OptionMenu, Button, filedialog, END
 from gtts import gTTS
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 
 
 class PDFToAudioConverter():
@@ -16,7 +16,7 @@ class PDFToAudioConverter():
 
         # Make it appear on the center of the screen
         window_width = 370
-        window_height = 200
+        window_height = 250
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -25,7 +25,7 @@ class PDFToAudioConverter():
 
         # Add some labels
         self.manual_lbl = Label(root, bg="light yellow",
-                                text="This app converts text to speech by getting text from a PDF file\nand converts it into an MP3 file.\nIt can only read text from proper PDF files,\ntext within pictures is not yet supported.",
+                                text="This app converts text to speech by getting text from a PDF file\nand converts it into an MP3 file.\nIt can only read text from proper PDF files,\ntext within images (OCR-ing) is not yet supported.",
                                 anchor="w", justify="left")
         self.manual_lbl.grid(column=0, row=0, columnspan=2, padx=5, pady=5, sticky="w")
 
@@ -36,10 +36,10 @@ class PDFToAudioConverter():
         self.language_lbl.grid(column=0, row=4, sticky="w")
 
         self.status_lbl = Label(root, bg="light yellow", text="", anchor="w", justify="left")
-        self.status_lbl.grid(column=0, row=5, columnspan=2)
+        self.status_lbl.grid(column=0, row=5, columnspan=2, pady=5)
 
         # Entry that displays the selected file
-        self.selected_file = Entry(root, state="readonly", width=150)
+        self.selected_file = Entry(root, state="readonly", width=300)
         self.selected_file.grid(column=0, row=3, pady=5)
         self.selected_file.insert(0, "No file selected")
 
@@ -54,10 +54,12 @@ class PDFToAudioConverter():
         self.select_btn = Button(root, text="Select File", command=self.select_pdf_file)
         self.select_btn.grid(column=0, row=2, sticky="w")
 
-        self.convert_btn = Button(root, text="Convert to MP3", command=self.convert_to_mp3, state="disabled")
+        self.convert_btn = Button(root, text="Convert to MP3",
+                                  command=self.convert_to_mp3, state="disabled")
         self.convert_btn.grid(column=1, row=2)
 
         self.pdf_file_path = ""
+
 
     def select_pdf_file(self):
         """Selects the PDF file."""
@@ -72,16 +74,18 @@ class PDFToAudioConverter():
             self.selected_file.config(state="readonly")
             self.selected_file.delete(0, END)
             self.selected_file.insert(0, "No file selected")
+            self.convert_btn.config(state="disabled")
 
     def get_text_from_pdf(self):
-        """Get the text from chosen PDF file. Only proper PDF files are supported."""
+        """Get the text from chosen PDF file. Only proper PDF files are supported,
+        no OCR-ing from images."""
         if not self.pdf_file_path:
             return
 
         text = ""
 
-        with open(self.pdf_file_path, "rb") as pdf:
-            pdf_reader = PdfReader(pdf)
+        with open(self.pdf_file_path, "rb") as pdf_file:
+            pdf_reader = PdfReader(pdf_file)
             for page in pdf_reader.pages:
                 content = page.extract_text()
                 text += content
@@ -92,7 +96,8 @@ class PDFToAudioConverter():
         """Get the audio from text using Google Text to Speech technology."""
         text_to_speech = gTTS(text=text, lang=language, slow=False)
 
-        mp3_file_path = filedialog.asksaveasfilename(defaultextension="mp3", filetypes=[("MP3 Files", "*.mp3")])
+        mp3_file_path = filedialog.asksaveasfilename(defaultextension="mp3",
+                                                     filetypes=[("MP3 Files", "*.mp3")])
         if mp3_file_path:
             text_to_speech.save(mp3_file_path)
 
