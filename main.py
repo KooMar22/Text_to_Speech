@@ -87,6 +87,9 @@ class PDFToAudioConverter():
         with open(self.pdf_file_path, "rb") as pdf_file:
             pdf_reader = PdfReader(pdf_file)
             for page in pdf_reader.pages:
+                self.status_lbl.config(text="Extracting text from PDF file...",
+                        bg="light yellow")
+                self.root.update()
                 content = page.extract_text()
                 text += content
         
